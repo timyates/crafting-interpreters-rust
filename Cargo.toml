@@ -1,0 +1,7 @@
+[package]
+name = "crafting-interpreters-rust"
+version = "0.1.0"
+authors = ["Tim <https://github.com/timyates>"]
+edition = '2018'
+description = "Working through the book 'Crafting Interpreters' in Rust"
+license = "MIT"
