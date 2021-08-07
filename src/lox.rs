@@ -1,8 +1,8 @@
 mod scanner;
 
-use std::fs::{read_to_string};
-use std::io::{stdin, Write, BufRead};
+use std::fs::read_to_string;
 use std::io;
+use std::io::{stdin, BufRead, Write};
 use std::process::exit;
 
 pub struct Lox {
@@ -16,19 +16,14 @@ pub fn fresh() -> Lox {
 impl Lox {
     fn run(&mut self, line: &str) {
         let mut scanner = scanner::init(line);
-        let tokens = scanner.scan_tokens();
-        for token in tokens {
-            println!("{:?}", token)
+        match scanner.scan_tokens() {
+            Err(_) => self.had_error = true,
+            Ok(tokens) => {
+                for token in tokens {
+                    println!("{:?}", token)
+                }
+            }
         }
-    }
-
-    fn error(&mut self, line: u32, message: &str) {
-        self.report(line, "", message)
-    }
-
-    fn report(&mut self, line: u32, location: &str, message: &str) {
-        eprintln!("[line {}] Error {} : {}", line, location, message);
-        self.had_error = true
     }
 
     pub fn run_file(&mut self, path: &str) {
@@ -45,7 +40,9 @@ impl Lox {
             io::stdout().flush().unwrap();
             stdin().lock().read_line(&mut line).unwrap();
             let trimmed = line.trim_end().to_string();
-            if trimmed.len() == 0 { break; }
+            if trimmed.is_empty() {
+                break;
+            }
             self.run(&trimmed);
             self.had_error = false;
             line.clear()

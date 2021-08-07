@@ -8,22 +8,37 @@ pub struct Scanner<'a> {
     current: usize,
 }
 
+#[derive(Debug, Clone)]
+pub struct LoxError;
+
 pub fn init(source: &str) -> Scanner {
-    Scanner { source, tokens: vec![], line: 1, start: 0, current: 0 }
+    Scanner {
+        source,
+        tokens: vec![],
+        line: 1,
+        start: 0,
+        current: 0,
+    }
 }
 
 impl Scanner<'_> {
-    pub fn scan_tokens(&mut self) -> Vec<token::Token> {
+    pub fn scan_tokens(&mut self) -> Result<Vec<token::Token>, LoxError> {
+        let mut had_error = false;
         while !self.at_end() {
             self.start = self.current;
-            self.scan_token()
+            had_error |= self.scan_token()
         }
         self.add_token_type(token::TokenType::Eof);
-        self.tokens.to_vec()
+        if had_error {
+            Err(LoxError)
+        } else {
+            Ok(self.tokens.to_vec())
+        }
     }
 
-    fn scan_token(&mut self) {
+    fn scan_token(&mut self) -> bool {
         let c = self.advance();
+        let mut had_error = false;
         match c {
             '(' => self.add_token_type(token::TokenType::LeftParen),
             ')' => self.add_token_type(token::TokenType::RightParen),
@@ -35,12 +50,105 @@ impl Scanner<'_> {
             '+' => self.add_token_type(token::TokenType::Plus),
             ';' => self.add_token_type(token::TokenType::SemiColon),
             '*' => self.add_token_type(token::TokenType::Star),
-            _ => ()
+
+            '!' => {
+                if self.lookahead('=') {
+                    self.add_token_type(token::TokenType::BangEqual)
+                } else {
+                    self.add_token_type(token::TokenType::Bang)
+                }
+            }
+            '=' => {
+                if self.lookahead('=') {
+                    self.add_token_type(token::TokenType::EqualEqual)
+                } else {
+                    self.add_token_type(token::TokenType::Equal)
+                }
+            }
+            '<' => {
+                if self.lookahead('=') {
+                    self.add_token_type(token::TokenType::LessEqual)
+                } else {
+                    self.add_token_type(token::TokenType::Less)
+                }
+            }
+            '>' => {
+                if self.lookahead('=') {
+                    self.add_token_type(token::TokenType::GreaterEqual)
+                } else {
+                    self.add_token_type(token::TokenType::Greater)
+                }
+            }
+
+            '/' => {
+                if self.lookahead('/') {
+                    while self.peek() != '\n' && !self.at_end() {
+                        self.advance();
+                    }
+                } else {
+                    self.add_token_type(token::TokenType::Slash)
+                }
+            }
+
+            ' ' | '\r' | '\t' => (),
+            '\n' => self.line += 1,
+
+            '"' => {
+                if !self.string() {
+                    eprintln!("[line {}] Error: Unterminated string", self.line);
+                    had_error = true
+                }
+            }
+
+            _ => {
+                eprintln!("[line {}] Error: Unexpected character", self.line);
+                had_error = true
+            }
+        }
+        had_error
+    }
+
+    fn string(&mut self) -> bool {
+        while self.peek() != '"' && !self.at_end() {
+            if self.peek() == '\n' {
+                self.line += 1
+            }
+            self.advance();
+        }
+
+        if self.at_end() {
+            return false;
+        }
+
+        self.advance();
+        let slice = self.source.get((self.start + 1)..(self.current - 1));
+        self.add_token_type(token::TokenType::String(slice.unwrap().to_string()));
+        true
+    }
+
+    fn peek(&mut self) -> char {
+        if self.at_end() {
+            '\0'
+        } else {
+            self.source.chars().nth(self.current).unwrap()
+        }
+    }
+
+    fn lookahead(&mut self, target: char) -> bool {
+        if self.at_end() || self.source.chars().nth(self.current).unwrap() != target {
+            false
+        } else {
+            self.current += 1;
+            true
         }
     }
 
     fn add_token_type(&mut self, token_type: token::TokenType) {
-        self.tokens.push(token::Token { token_type, lexeme: "".to_string(), line: self.line });
+        self.tokens.push(token::Token {
+            token_type,
+            lexeme: "".to_string(),
+            line: self.line,
+        });
     }
 
     fn advance(&mut self) -> char {

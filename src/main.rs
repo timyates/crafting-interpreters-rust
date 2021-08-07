@@ -9,7 +9,7 @@ fn main() {
     if a.len() > 1 {
         eprintln!("Usage: lox [script]");
         exit(64)
-    } else if a.len() == 0 {
+    } else if a.is_empty() {
         lox.run_prompt()
     } else {
         lox.run_file(a.get(0).expect("Arg with no arg?"))
