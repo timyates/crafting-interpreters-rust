@@ -5,3 +5,6 @@ authors = ["Tim <https://github.com/timyates>"]
 edition = '2018'
 description = "Working through the book 'Crafting Interpreters' in Rust"
 license = "MIT"
+
+[dependencies]
+phf = { version = "0.9.1", features = ["macros"] }

@@ -25,6 +25,14 @@ fn digit(ch: char) -> bool {
     ('0'..='9').contains(&ch)
 }
 
+fn alpha(ch: char) -> bool {
+    ('a'..='z').contains(&ch) || ('A'..='Z').contains(&ch) || ch == '_'
+}
+
+fn alphanumeric(ch: char) -> bool {
+    alpha(ch) || digit(ch)
+}
+
 impl Scanner<'_> {
     pub fn scan_tokens(&mut self) -> Result<Vec<token::Token>, LoxError> {
         let mut had_error = false;
@@ -94,9 +102,13 @@ impl Scanner<'_> {
                 }
             }
 
+            // Ignore whitespace
             ' ' | '\r' | '\t' => (),
+
+            // Increment line number
             '\n' => self.line += 1,
 
+            // String search
             '"' => {
                 if !self.string() {
                     eprintln!("[line {}] Error: Unterminated string", self.line);
@@ -105,6 +117,7 @@ impl Scanner<'_> {
             }
 
             '0'..='9' => self.number(),
+            'a'..='z' | 'A'..='Z' | '_' => self.identifier(),
 
             _ => {
                 eprintln!("[line {}] Error: Unexpected character", self.line);
@@ -131,6 +144,20 @@ impl Scanner<'_> {
         self.add_token_type(token::TokenType::Number(
             slice.unwrap().parse::<f64>().unwrap(),
         ))
+    }
+
+    fn identifier(&mut self) {
+        while alphanumeric(self.peek()) {
+            self.advance();
+        }
+
+        let slice = self.source.get(self.start..self.current).unwrap();
+        self.add_token_type(
+            token::KEYWORDS
+                .get(slice)
+                .unwrap_or(&token::TokenType::Identifier(slice.to_string()))
+                .clone(),
+        );
     }
 
     fn string(&mut self) -> bool {
@@ -178,7 +205,6 @@ impl Scanner<'_> {
     fn add_token_type(&mut self, token_type: token::TokenType) {
         self.tokens.push(token::Token {
             token_type,
-            lexeme: "".to_string(),
             line: self.line,
         });
     }
