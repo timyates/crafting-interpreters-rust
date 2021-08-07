@@ -1,5 +1,3 @@
-use crate::lox::scanner::token::TokenType;
-
 mod token;
 
 pub struct Scanner<'a> {
@@ -41,7 +39,7 @@ impl Scanner<'_> {
         }
     }
 
-    fn add_token_type(&mut self, token_type: TokenType) {
+    fn add_token_type(&mut self, token_type: token::TokenType) {
         self.tokens.push(token::Token { token_type, lexeme: "".to_string(), line: self.line });
     }
 
