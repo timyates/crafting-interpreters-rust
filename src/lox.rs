@@ -14,8 +14,8 @@ pub fn fresh() -> Lox {
 }
 
 impl Lox {
-    fn run(&mut self, line: &String) {
-        let mut scanner = scanner::Scanner { source: line.clone() };
+    fn run(&mut self, line: &str) {
+        let mut scanner = scanner::init(line);
         let tokens = scanner.scan_tokens();
         for token in tokens {
             println!("{:?}", token)
@@ -31,7 +31,7 @@ impl Lox {
         self.had_error = true
     }
 
-    pub fn run_file(&mut self, path: &String) {
+    pub fn run_file(&mut self, path: &str) {
         self.run(&read_to_string(path).unwrap());
         if self.had_error {
             exit(65);

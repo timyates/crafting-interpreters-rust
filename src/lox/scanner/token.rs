@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Clone,Debug)]
 pub enum TokenType {
     // Single chars
     LeftParen, RightParen, LeftBrace, RightBrace, Comma, Dot, Minus, Plus, SemiColon, Slash, Star,
@@ -15,11 +15,11 @@ pub enum TokenType {
     Eof
 }
 
-#[derive(Debug)]
+#[derive(Clone,Debug)]
 pub struct Token {
-    token_type: TokenType,
-    lexeme: String,
-    line: u32,
+    pub token_type: TokenType,
+    pub lexeme: String,
+    pub line: u32,
 }
 
 impl Token {
