@@ -21,6 +21,10 @@ pub fn init(source: &str) -> Scanner {
     }
 }
 
+fn digit(ch: char) -> bool {
+    ('0'..='9').contains(&ch)
+}
+
 impl Scanner<'_> {
     pub fn scan_tokens(&mut self) -> Result<Vec<token::Token>, LoxError> {
         let mut had_error = false;
@@ -100,12 +104,34 @@ impl Scanner<'_> {
                 }
             }
 
+            '0'..='9' => self.number(),
+
             _ => {
                 eprintln!("[line {}] Error: Unexpected character", self.line);
                 had_error = true
             }
         }
         had_error
+    }
+
+    fn number(&mut self) {
+        while digit(self.peek()) {
+            self.advance();
+        }
+
+        if self.peek() == '.' && digit(self.peek_next()) {
+            self.advance();
+        }
+
+        while digit(self.peek()) {
+            self.advance();
+        }
+
+        let slice = self.source.get(self.start..self.current);
+        println!("Slicing {}", slice.unwrap());
+        self.add_token_type(token::TokenType::Number(
+            slice.unwrap().parse::<f64>().unwrap(),
+        ))
     }
 
     fn string(&mut self) -> bool {
@@ -132,6 +158,13 @@ impl Scanner<'_> {
         } else {
             self.source.chars().nth(self.current).unwrap()
         }
+    }
+
+    fn peek_next(&mut self) -> char {
+        if self.current + 1 >= self.source.len() {
+            return '\0';
+        }
+        self.source.chars().nth(self.current + 1).unwrap()
     }
 
     fn lookahead(&mut self, target: char) -> bool {
