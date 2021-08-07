@@ -128,7 +128,6 @@ impl Scanner<'_> {
         }
 
         let slice = self.source.get(self.start..self.current);
-        println!("Slicing {}", slice.unwrap());
         self.add_token_type(token::TokenType::Number(
             slice.unwrap().parse::<f64>().unwrap(),
         ))
