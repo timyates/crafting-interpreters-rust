@@ -1,7 +1,6 @@
 use phf::{phf_map, Map};
 
 #[derive(Clone, Debug)]
-#[allow(dead_code)]
 pub enum TokenType {
     // Single chars
     LeftParen,
